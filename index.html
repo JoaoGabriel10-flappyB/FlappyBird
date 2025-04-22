@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Flappy Bird</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1a1a1a, #333);
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        canvas {
+            border: 2px solid black;
+            background-color: #4A90E2;
+            max-width: 100%;
+            max-height: 100vh;
+            touch-action: none;
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #mainMenu {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.95));
+            color: white;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .game-title {
+            font-size: 48px;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 40px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: titleGlow 2s infinite;
+        }
+
+        @keyframes titleGlow {
+            0% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { text-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+            100% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+        }
+
+        .menu-button {
+            padding: 15px 40px;
+            margin: 10px;
+            font-size: 24px;
+            background: linear-gradient(45deg, #4A90E2, #357ABD);
+            border: 2px solid #87CEEB;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-button:before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #FFD700, #FFA500, #87CEEB, #4A90E2);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-button:hover:before {
+            opacity: 1;
+            animation: borderGlow 2s infinite linear;
+        }
+
+        @keyframes borderGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #skinsMenu {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.85));
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            z-index: 101;
+        }
+
+        .skins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 70px;
+            margin-bottom: 70px;
+            overflow-y: visible;
+        }
+
+        .skin-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #666;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .skin-item.unlocked {
+            border-color: #4CAF50;
+        }
+
+        .skin-item.selected {
+            border-color: #FFD700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .skin-item.locked {
+            filter: grayscale(1);
+            opacity: 0.7;
+        }
+
+        .skin-preview {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none !important;
+            z-index: 100;
+        }
+
+        /* Mostra o botão apenas quando o jogo está ativo */
+        .game-active #mobileControls {
+            display: block !important;
+        }
+
+        #skinsMenu #mobileControls {
+            display: none !important;
+        }
+
+        #mainMenu #mobileControls {
+            display: none !important;
+        }
+
+        #jumpButton {
+            padding: 15px 30px;
+            font-size: 20px;
+            background: rgba(74, 144, 226, 0.3);
+            border: 2px solid white;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.3s ease;
+        }
+
+        #jumpButton:active {
+            transform: scale(0.95);
+            background: rgba(74, 144, 226, 0.5);
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            #mobileControls {
+                display: block;
+            }
+        }
+
+        .unlock-info {
+            font-size: 14px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        #highscoreDisplay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #FFD700;
+            font-size: 24px;
+            text-align: right;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .menu-icon {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            width: 30px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid white;
+            border-radius: 5px;
+            color: white;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .menu-icon:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .skin-mystery {
+            font-size: 24px;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            margin-bottom: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        .skin-name {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .skin-item.locked .skin-preview {
+            filter: brightness(0.3);
+        }
+
+        .skin-item.locked .skin-mystery {
+            display: block;
+        }
+
+        .skin-item.unlocked .skin-mystery {
+            display: none;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        /* Ajustes para mobile */
+        @media (max-width: 768px) {
+            #skinsMenu {
+                padding: 10px;
+                overflow-y: scroll;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .skins-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: 15px;
+                padding: 15px;
+                margin-top: 60px;
+                margin-bottom: 60px;
+            }
+
+            .skin-item {
+                min-height: 200px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .back-button {
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                z-index: 102;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 8px 16px;
+                border-radius: 20px;
+            }
+
+            #skinsMenu::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            #skinsMenu::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+            }
+
+            #skinsMenu::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 4px;
+            }
+
+            #skinsMenu::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        /* Prevenir comportamentos indesejados de scroll/zoom */
+        body.skins-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        /* Garantir que o menu de skins ocupe toda a altura disponível */
+        #skinsMenu.active {
+            display: flex;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .thank-you-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 14px;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInOut 5s infinite;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            max-width: 80%;
+            font-style: italic;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        .heart {
+            color: #FF69B4;
+            display: inline-block;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .skin-attribute {
+            font-size: 14px;
+            color: #90EE90;
+            margin-top: 5px;
+            font-style: italic;
+            text-shadow: 0 0 5px rgba(144, 238, 144, 0.5);
+        }
+
+        .beginner-tag {
+            font-size: 12px;
+            color: #4CAF50;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #ghostModeButton {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            font-size: 18px;
+            background: linear-gradient(45deg, #800000, #FF0000);
+            border: 2px solid #FF4444;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            display: none;
+            z-index: 100;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+        }
+
+        #ghostModeButton.cooldown {
+            background: #666;
+            border-color: #999;
+            cursor: not-allowed;
+        }
+
+        #cooldownTimer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+        }
+
+        .ghost-effect {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.5;
+            filter: blur(2px);
+            transition: opacity 0.3s;
+        }
+
+        /* Remover estilos do botão de som */
+        .sound-button {
+            display: none !important;
+        }
+
+        #gameContainer.game-active canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <audio id="bgMusic" loop>
+            <source src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="flapSound">
+            <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="pointSound">
+            <source src="https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3" type="audio/mpeg">
+        </audio>
+        <audio id="hitSound">
+            <source src="https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3" type="audio/mpeg">
+        </audio>
+        <div id="mainMenu">
+            <h1 class="game-title">Flappy Bird</h1>
+            <button class="menu-button" onclick="startGame()">Jogar</button>
+            <button class="menu-button" onclick="showSkinsMenu()">Skins</button>
+            <div id="highscoreDisplay">
+                Recorde: <span id="menuHighscore">0</span>
+            </div>
+            <div class="thank-you-message">
+                Obrigado pelo seu apoio! Seu R$1 vale muito mais que dinheiro, 
+                vale a realização de um sonho <span class="heart">♥</span>
+            </div>
+        </div>
+        <div id="skinsMenu">
+            <button class="back-button" onclick="hideSkinsMenu()">Voltar</button>
+            <h2 style="margin: 20px 0; font-size: 32px; color: #FFD700;">Skins</h2>
+            <div class="skins-grid" id="skinsGrid"></div>
+        </div>
+        <button class="menu-icon" id="menuButton">≡</button>
+        <canvas id="gameCanvas" width="320" height="480"></canvas>
+        <div id="mobileControls">
+            <button id="jumpButton">Pular</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const jumpButton = document.getElementById('jumpButton');
+        const mainMenu = document.getElementById('mainMenu');
+        const skinsMenu = document.getElementById('skinsMenu');
+        const menuButton = document.getElementById('menuButton');
+
+        // Configurações do jogo
+        const GRAVITY = 0.5;
+        const FLAP_SPEED = -8;
+        const PIPE_SPEED = 2;
+        const PIPE_GAP = 150;
+        const PIPE_SPAWN_INTERVAL = 2500;
+        const MIN_PIPE_DISTANCE = 200;
+        const GLIDE_REDUCTION = 0.2;
+        const GREEN_BIRD_GLIDE_BONUS = 0.4;
+        const BASE_GLIDE_BONUS = 0.15;
+        const MOVING_PIPE_SPEED = 1.5; // Velocidade do movimento vertical dos canos móveis
+
+        // Estado do jogo
+        let gameStarted = false;
+        let gameOver = false;
+        let score = 0;
+        let isGliding = false;
+        let pipes = [];
+        let lastPipeX = -1;
+        let gameLoopId = null;
+        let clouds = [];
+        let passedPipesCount = 0;
+
+        // Sistema de skins
+        const skins = [
+            { 
+                id: 'default', 
+                name: 'Pássaro Verde', 
+                unlockScore: 0,
+                colors: ['#32CD32', '#228B22'],
+                unlocked: true,
+                selected: true,
+                extras: {
+                    feathers: true,
+                    wings: true,
+                    glide: true
+                }
+            },
+            { 
+                id: 'yellow', 
+                name: 'Pássaro Amarelo', 
+                unlockScore: 15,
+                colors: ['#FFD700', '#FFA500'],
+                unlocked: false,
+                selected: false,
+                extras: {
+                    feathers: true,
+                    wings: true,
+                    crown: true,
+                    doublePoints: true
+                }
+            },
+            { 
+                id: 'demon', 
+                name: 'Pássaro Demônio', 
+                unlockScore: 30,
+                colors: ['#800000', '#FF0000'],
+                unlocked: false,
+                selected: false,
+                extras: {
+                    horns: true,
+                    tail: true,
+                    eyes: 'demon',
+                    ghostMode: true
+                }
+            },
+            { 
+                id: 'angel', 
+                name: 'Pássaro Anjo', 
+                unlockScore: 50,
+                colors: ['#FFFFFF', '#E6E6FA'],
+                unlocked: false,
+                selected: false,
+                extras: {
+                    halo: true,
+                    wings: 'angel',
+                    glow: true,
+                    resurrection: true,
+                    divineAscension: true
+                }
+            },
+            { 
+                id: 'halloween', 
+                name: 'Olho Flutuante', 
+                unlockScore: 75,
+                colors: ['#800080', '#4B0082'],
+                unlocked: false,
+                selected: false,
+                isEye: true,
+                extras: {
+                    veins: true,
+                    glow: 'dark',
+                    dimensionalAura: true
+                }
+            }
+        ];
+
+        let currentSkin = skins[0];
+        let highScore = 0;
+
+        // Adicionar variáveis de áudio
+        const bgMusic = document.getElementById('bgMusic');
+        const flapSound = document.getElementById('flapSound');
+        const pointSound = document.getElementById('pointSound');
+        const hitSound = document.getElementById('hitSound');
+        const soundButton = document.getElementById('soundButton');
+        let isMuted = false;
+
+        // Configurar volumes e comportamento do áudio
+        bgMusic.volume = 0.12;  // Aumentado para 12% do volume
+        flapSound.volume = 0.1;  // 10% do volume
+        pointSound.volume = 0.15;  // 15% do volume
+        hitSound.volume = 0.2;  // 20% do volume
+
+        // Pré-carregar a música
+        bgMusic.load();
+
+        // Função para tocar som com proteção contra acúmulo
+        function playSound(sound) {
+            if (!isMuted) {
+                sound.pause();
+                sound.currentTime = 0;
+                try {
+                    sound.play().catch(error => console.log("Erro ao tocar som:", error));
+                } catch (error) {
+                    console.log("Erro ao tocar som:", error);
+                }
+            }
+        }
+
+        // Carregar dados salvos
+        function loadGameData() {
+            try {
+                // Carregar recorde do armazenamento separado primeiro
+                const savedHighScore = parseInt(localStorage.getItem('flappyBirdHighScore')) || 0;
+                
+                const savedData = localStorage.getItem('flappyBirdData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    // Usar o maior valor entre os dois armazenamentos
+                    highScore = Math.max(savedHighScore, parseInt(data.highScore) || 0);
+                    
+                    // Restaurar skin selecionada
+                    if (data.selectedSkin) {
+                        const savedSkin = skins.find(s => s.id === data.selectedSkin);
+                        if (savedSkin) {
+                            selectSkin(savedSkin.id);
+                        }
+                    }
+                } else {
+                    highScore = savedHighScore;
+                }
+                
+                // Atualizar display do recorde
+                document.getElementById('menuHighscore').textContent = highScore;
+                
+                // Desbloquear skins baseado no recorde
+                skins.forEach(skin => {
+                    if (highScore >= skin.unlockScore) {
+                        skin.unlocked = true;
+                    }
+                });
+                
+                updateSkinsGrid();
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                highScore = 0;
+                updateSkinsGrid();
+            }
+        }
+
+        // Salvar dados do jogo
+        function saveGameData() {
+            try {
+                const currentHighScore = parseInt(localStorage.getItem('flappyBirdHighScore')) || 0;
+                const newHighScore = Math.max(currentHighScore, score);
+                
+                // Salvar o recorde separadamente para mais segurança
+                localStorage.setItem('flappyBirdHighScore', newHighScore.toString());
+                
+                const data = {
+                    highScore: newHighScore,
+                    selectedSkin: currentSkin.id
+                };
+                localStorage.setItem('flappyBirdData', JSON.stringify(data));
+                
+                // Atualizar variáveis do jogo
+                highScore = newHighScore;
+                
+                // Atualizar displays
+                document.getElementById('menuHighscore').textContent = newHighScore;
+                
+                // Verificar desbloqueio de skins
+                skins.forEach(skin => {
+                    if (!skin.unlocked && newHighScore >= skin.unlockScore) {
+                        skin.unlocked = true;
+                        alert(`Parabéns! Você desbloqueou a skin "${skin.name}"!`);
+                        updateSkinsGrid();
+                    }
+                });
+            } catch (error) {
+                console.error('Erro ao salvar dados:', error);
+            }
+        }
+
+        // Atualizar grid de skins
+        function updateSkinsGrid() {
+            const grid = document.getElementById('skinsGrid');
+            grid.innerHTML = '';
+
+            skins.forEach(skin => {
+                const div = document.createElement('div');
+                div.className = `skin-item ${skin.unlocked ? 'unlocked' : 'locked'} ${skin.selected ? 'selected' : ''}`;
+                
+                // Adicionar descrições dos atributos
+                let attributeText = '';
+                if (skin.id === 'default') {
+                    attributeText = '<div class="skin-attribute">Atributo: +40% Planagem</div>';
+                } else if (skin.id === 'yellow') {
+                    attributeText = '<div class="skin-attribute" style="color: #FFD700">Atributo: Pontuação 2x</div>';
+                } else if (skin.id === 'demon') {
+                    attributeText = `
+                        <div class="skin-attribute" style="color: #FF4444">Modo Fantasma: 30% de chance</div>
+                        <div class="skill-description" style="color: #FF6666; font-size: 12px; margin-top: 5px;">
+                            Atravessa canos por 1 segundo
+                        </div>
+                    `;
+                } else if (skin.id === 'angel') {
+                    attributeText = `
+                        <div class="skin-attribute" style="color: #E6E6FA">Ascensão Divina</div>
+                        <div class="skill-description" style="color: #E6E6FA; font-size: 12px; margin-top: 5px;">
+                            • 5 Ressurreições<br>
+                            • 2s de Invulnerabilidade ao Renascer<br>
+                            • Aura Celestial
+                        </div>
+                    `;
+                } else if (skin.id === 'halloween') {
+                    attributeText = `
+                        <div class="skin-attribute" style="color: #800080">Aura Dimensional</div>
+                        <div class="skill-description" style="color: #9370DB; font-size: 12px; margin-top: 5px;">
+                            • Ganha 1 ressurreição a cada 10 canos<br>
+                            • 2s de Invulnerabilidade ao Renascer
+                        </div>
+                    `;
+                }
+                
+                const beginnerTag = skin.id === 'default' ? 
+                    '<div class="beginner-tag">Para iniciantes</div>' : '';
+                
+                div.innerHTML = `
+                    <div class="skin-mystery">?</div>
+                    <div class="skin-preview">
+                        <canvas width="80" height="80" id="preview-${skin.id}"></canvas>
+                    </div>
+                    ${beginnerTag}
+                    <div class="skin-name">${skin.name}</div>
+                    ${attributeText}
+                    ${!skin.unlocked ? 
+                        `<div class="unlock-info">Desbloqueio: ${skin.unlockScore} pontos</div>` :
+                        ''
+                    }
+                `;
+
+                if (skin.unlocked) {
+                    div.onclick = () => selectSkin(skin.id);
+                }
+
+                grid.appendChild(div);
+                
+                const previewCanvas = document.getElementById(`preview-${skin.id}`);
+                const previewCtx = previewCanvas.getContext('2d');
+                drawBirdPreview(previewCtx, skin);
+            });
+        }
+
+        function drawBirdPreview(ctx, skin) {
+            ctx.save();
+            ctx.translate(40, 40);
+
+            switch(skin.id) {
+                case 'default':
+                    drawDefaultBird(ctx, 0, 0, 20, true);
+                    break;
+                case 'yellow':
+                    drawYellowBird(ctx, 0, 0, 20, true);
+                    break;
+                case 'demon':
+                    drawDemonBird(ctx, 0, 0, 20, true);
+                    break;
+                case 'angel':
+                    drawAngelBird(ctx, 0, 0, 20, true);
+                    break;
+                case 'halloween':
+                    drawFloatingEye(ctx, 0, 0, 20, true);
+                    break;
+            }
+
+            ctx.restore();
+        }
+
+        function drawDefaultBird(ctx, x, y, radius, isPreview = false) {
+            // Corpo principal com gradiente
+            const bodyGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            bodyGradient.addColorStop(0, '#32CD32');
+            bodyGradient.addColorStop(1, '#228B22');
+            ctx.fillStyle = bodyGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Asas detalhadas
+            ctx.fillStyle = '#228B22';
+            ctx.beginPath();
+            ctx.ellipse(x - radius/2, y, radius/2, radius, Math.PI/4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Penas na cabeça
+            ctx.fillStyle = '#32CD32';
+            for(let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.ellipse(x, y - radius/2, radius/6, radius/3, 
+                    -Math.PI/6 + (i * Math.PI/6), 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Olhos realistas
+            // Branco do olho
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/3, 0, Math.PI * 2);
+            ctx.fill();
+            // Íris
+            ctx.fillStyle = '#4B0082';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/5, 0, Math.PI * 2);
+            ctx.fill();
+            // Pupila
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/8, 0, Math.PI * 2);
+            ctx.fill();
+            // Reflexo no olho
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x + radius/2 - radius/10, y - radius/4 - radius/10, radius/15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bico mais detalhado
+            ctx.fillStyle = '#FFA500';
+            ctx.beginPath();
+            ctx.moveTo(x + radius/2, y);
+            ctx.lineTo(x + radius * 1.3, y - radius/6);
+            ctx.lineTo(x + radius * 1.3, y + radius/6);
+            ctx.lineTo(x + radius/2, y + radius/8);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawYellowBird(ctx, x, y, radius, isPreview = false) {
+            // Corpo principal
+            const bodyGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            bodyGradient.addColorStop(0, '#FFD700');
+            bodyGradient.addColorStop(1, '#FFA500');
+            ctx.fillStyle = bodyGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Coroa dourada
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(x - radius/2, y - radius);
+            for(let i = 0; i < 5; i++) {
+                ctx.lineTo(x - radius/2 + (radius/4 * i), y - radius * 1.3);
+                ctx.lineTo(x - radius/2 + (radius/4 * (i + 0.5)), y - radius);
+            }
+            ctx.fill();
+
+            // Asas douradas
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.ellipse(x - radius/2, y, radius/1.5, radius, Math.PI/4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Detalhes das penas
+            ctx.strokeStyle = '#FFA500';
+            ctx.lineWidth = 2;
+            for(let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(x - radius/3, y + (i * radius/4) - radius/2, 
+                    radius/4, 0, Math.PI);
+                ctx.stroke();
+            }
+
+            // Olhos
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#4B0082';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bico
+            ctx.fillStyle = '#FFA500';
+            ctx.beginPath();
+            ctx.moveTo(x + radius/2, y);
+            ctx.lineTo(x + radius * 1.3, y - radius/6);
+            ctx.lineTo(x + radius * 1.3, y + radius/6);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawAngelBird(ctx, x, y, radius, isPreview = false) {
+            // Aura angelical
+            if (!isPreview) {
+                const gradient = ctx.createRadialGradient(x, y, radius, x, y, radius * 2);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+                gradient.addColorStop(1, 'rgba(230, 230, 250, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Corpo principal
+            const bodyGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            bodyGradient.addColorStop(0, '#FFFFFF');
+            bodyGradient.addColorStop(1, '#E6E6FA');
+            ctx.fillStyle = bodyGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Asas angelicais
+            ctx.fillStyle = '#FFFFFF';
+            // Asa esquerda
+            ctx.beginPath();
+            ctx.moveTo(x - radius/2, y);
+            ctx.quadraticCurveTo(x - radius * 1.5, y - radius, x - radius/2, y - radius);
+            ctx.quadraticCurveTo(x - radius, y - radius/2, x - radius/2, y);
+            ctx.fill();
+            // Asa direita
+            ctx.beginPath();
+            ctx.moveTo(x + radius/2, y);
+            ctx.quadraticCurveTo(x + radius * 1.5, y - radius, x + radius/2, y - radius);
+            ctx.quadraticCurveTo(x + radius, y - radius/2, x + radius/2, y);
+            ctx.fill();
+
+            // Auréola dourada
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x, y - radius, radius/2, 0, Math.PI * 2);
+            ctx.stroke();
+            // Brilho da auréola
+            const haloGradient = ctx.createRadialGradient(x, y - radius, 0, x, y - radius, radius/2);
+            haloGradient.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
+            haloGradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+            ctx.fillStyle = haloGradient;
+            ctx.beginPath();
+            ctx.arc(x, y - radius, radius/2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Olhos celestiais
+            ctx.fillStyle = '#87CEEB';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#4169E1';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/5, 0, Math.PI * 2);
+            ctx.fill();
+            // Brilho nos olhos
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bico dourado suave
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(x + radius/2, y);
+            ctx.quadraticCurveTo(x + radius, y, x + radius * 1.2, y);
+            ctx.lineTo(x + radius * 1.2, y + radius/8);
+            ctx.quadraticCurveTo(x + radius, y + radius/8, x + radius/2, y + radius/8);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawFloatingEye(ctx, x, y, radius, isPreview = false) {
+            // Aura sombria
+            if (!isPreview) {
+                const gradient = ctx.createRadialGradient(x, y, radius, x, y, radius * 2);
+                gradient.addColorStop(0, 'rgba(75, 0, 130, 0.2)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Globo ocular principal
+            const eyeGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            eyeGradient.addColorStop(0, '#FFFFFF');
+            eyeGradient.addColorStop(0.7, '#F8F8FF');
+            eyeGradient.addColorStop(1, '#E6E6FA');
+            ctx.fillStyle = eyeGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Veias do olho
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI / 4);
+                ctx.beginPath();
+                ctx.moveTo(x + Math.cos(angle) * radius/2, y + Math.sin(angle) * radius/2);
+                ctx.quadraticCurveTo(
+                    x + Math.cos(angle) * radius * 0.8,
+                    y + Math.sin(angle) * radius * 0.8,
+                    x + Math.cos(angle) * radius,
+                    y + Math.sin(angle) * radius
+                );
+                ctx.stroke();
+            }
+
+            // Íris realista
+            const irisGradient = ctx.createRadialGradient(x, y, 0, x, y, radius/1.5);
+            irisGradient.addColorStop(0, '#800080');
+            irisGradient.addColorStop(0.7, '#4B0082');
+            irisGradient.addColorStop(1, '#2A0A1B');
+            ctx.fillStyle = irisGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius/1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Detalhes da íris
+            ctx.strokeStyle = '#2A0A1B';
+            for(let i = 0; i < 12; i++) {
+                const angle = (i * Math.PI / 6);
+                ctx.beginPath();
+                ctx.moveTo(x + Math.cos(angle) * radius/3, y + Math.sin(angle) * radius/3);
+                ctx.lineTo(x + Math.cos(angle) * radius/1.5, y + Math.sin(angle) * radius/1.5);
+                ctx.stroke();
+            }
+
+            // Pupila com gradiente
+            const pupilGradient = ctx.createRadialGradient(x, y, 0, x, y, radius/3);
+            pupilGradient.addColorStop(0, '#000000');
+            pupilGradient.addColorStop(1, '#1A1A1A');
+            ctx.fillStyle = pupilGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius/3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Reflexo na pupila
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.beginPath();
+            ctx.arc(x - radius/6, y - radius/6, radius/8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + radius/8, y + radius/8, radius/12, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function selectSkin(skinId) {
+            skins.forEach(skin => skin.selected = false);
+            const selectedSkin = skins.find(skin => skin.id === skinId);
+            if (selectedSkin && selectedSkin.unlocked) {
+                selectedSkin.selected = true;
+                currentSkin = selectedSkin;
+                // Inicializar ressurreições se selecionar o pássaro anjo
+                if (!gameStarted) {
+                    bird.resurrectionsLeft = skinId === 'angel' ? 5 : 0;
+                }
+                saveGameData();
+                updateSkinsGrid();
+            }
+        }
+
+        function showSkinsMenu() {
+            mainMenu.style.display = 'none';
+            skinsMenu.style.display = 'flex';
+            skinsMenu.classList.add('active');
+            document.body.classList.add('skins-open');
+            document.getElementById('gameContainer').classList.remove('game-active');
+            updateSkinsGrid();
+        }
+
+        function hideSkinsMenu() {
+            skinsMenu.style.display = 'none';
+            skinsMenu.classList.remove('active');
+            mainMenu.style.display = 'flex';
+            document.body.classList.remove('skins-open');
+            document.getElementById('gameContainer').classList.remove('game-active');
+        }
+
+        // Função para gerenciar a música de fundo
+        function manageBgMusic() {
+            if (isMuted) {
+                bgMusic.pause();
+                return;
+            }
+
+            // Definir volume antes de tentar tocar
+            bgMusic.volume = 0.12;
+
+            // Tentar tocar a música
+            const playPromise = bgMusic.play();
+
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        console.log('Música iniciada com sucesso');
+                    })
+                    .catch(error => {
+                        console.warn('Erro ao tocar música:', error);
+                        // Tentar novamente após interação do usuário
+                        const resumeAudio = () => {
+                            if (!isMuted) {
+                                bgMusic.play()
+                                    .then(() => {
+                                        document.removeEventListener('click', resumeAudio);
+                                        console.log('Música retomada após interação');
+                                    })
+                                    .catch(err => console.error('Erro ao retomar música:', err));
+                            }
+                        };
+                        document.addEventListener('click', resumeAudio);
+                    });
+            }
+        }
+
+        // Modificar a função startGame para garantir que a música comece
+        function startGame() {
+            mainMenu.style.display = 'none';
+            canvas.style.display = 'block';
+            menuButton.style.display = 'flex';
+            document.getElementById('gameContainer').classList.add('game-active');
+            
+            // Garantir que o canvas esteja visível
+            canvas.style.opacity = '1';
+            canvas.style.visibility = 'visible';
+            
+            reset();
+            initClouds();
+            bird.resurrectionsLeft = currentSkin.id === 'angel' ? 5 : 0;
+            
+            if (gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+            }
+            
+            // Iniciar o jogo
+            gameStarted = false;
+            gameOver = false;
+            gameLoop();
+            
+            // Iniciar spawn de canos quando o jogo começar
+            if (window.spawnInterval) {
+                clearInterval(window.spawnInterval);
+            }
+        }
+
+        function reset() {
+            if (score > highScore) {
+                highScore = score;
+                saveGameData();
+                skins.forEach(skin => {
+                    if (!skin.unlocked && highScore >= skin.unlockScore) {
+                        skin.unlocked = true;
+                        alert(`Parabéns! Você desbloqueou a skin "${skin.name}"!`);
+                    }
+                });
+            }
+
+            gameOver = false;
+            gameStarted = false;
+            pipes = [];
+            clouds = [];
+            lastPipeX = -1;
+            bird.reset();
+            score = 0;
+            
+            if (window.spawnInterval) {
+                clearInterval(window.spawnInterval);
+            }
+            
+            bird.y = canvas.height / 2;
+            bird.velocity = 0;
+            
+            initClouds();
+        }
+
+        function showMenu() {
+            if (gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+            }
+            canvas.style.display = 'none';
+            menuButton.style.display = 'none';
+            document.getElementById('gameContainer').classList.remove('game-active');
+            mainMenu.style.display = 'flex';
+            gameStarted = false;
+            gameOver = false;
+            
+            // Pausar música de fundo
+            bgMusic.pause();
+        }
+
+        // Detectar se é dispositivo móvel
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+        }
+
+        // Ajustar tamanho do canvas com base na tela
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            let canvasWidth = 320;
+            let canvasHeight = 480;
+            
+            if (window.innerWidth < window.innerHeight) {
+                // Modo retrato
+                const scale = Math.min(containerWidth / canvasWidth, containerHeight / canvasHeight);
+                canvas.style.width = (canvasWidth * scale) + 'px';
+                canvas.style.height = (canvasHeight * scale) + 'px';
+            } else {
+                // Modo paisagem
+                const scale = Math.min(containerHeight / canvasWidth, containerWidth / canvasHeight);
+                canvas.style.height = (canvasWidth * scale) + 'px';
+                canvas.style.width = (canvasHeight * scale) + 'px';
+            }
+        }
+
+        // Pássaro
+        const bird = {
+            x: canvas.width / 3,
+            y: canvas.height / 2,
+            velocity: 0,
+            radius: 15,
+            isGhostEffectActive: false,
+            rotation: 0,
+            resurrectionsLeft: 0,
+            isInvulnerable: false,
+            invulnerabilityTimer: null,
+            dimensionalAuraActive: false,
+            dimensionalAuraTimer: null,
+
+            activateGhostEffect() {
+                if (currentSkin.id === 'demon') {
+                    this.isGhostEffectActive = true;
+                    showGhostModeMessage();
+                    setTimeout(() => {
+                        this.isGhostEffectActive = false;
+                    }, 1000);
+                }
+            },
+
+            checkDimensionalAura() {
+                if (currentSkin.id === 'halloween' && passedPipesCount > 0 && passedPipesCount % 10 === 0) {
+                    this.resurrectionsLeft++;
+                    this.dimensionalAuraActive = true;
+                    showDimensionalAuraEffect();
+                    
+                    if (this.dimensionalAuraTimer) {
+                        clearTimeout(this.dimensionalAuraTimer);
+                    }
+                    
+                    this.dimensionalAuraTimer = setTimeout(() => {
+                        this.dimensionalAuraActive = false;
+                        this.dimensionalAuraTimer = null;
+                    }, 2000);
+                }
+            },
+
+            resurrect() {
+                if (this.resurrectionsLeft > 0) {
+                    this.resurrectionsLeft--;
+                    this.velocity = -5;
+                    this.isInvulnerable = true;
+                    
+                    if (currentSkin.id === 'halloween') {
+                        showDimensionalResurrectionEffect();
+                    } else {
+                        showResurrectionEffect();
+                    }
+                    
+                    if (this.invulnerabilityTimer) {
+                        clearTimeout(this.invulnerabilityTimer);
+                    }
+                    
+                    this.invulnerabilityTimer = setTimeout(() => {
+                        this.isInvulnerable = false;
+                        this.invulnerabilityTimer = null;
+                    }, 2000);
+                    
+                    return true;
+                }
+                return false;
+            },
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Efeito de invulnerabilidade
+                if (this.isInvulnerable) {
+                    ctx.globalAlpha = 0.7 + Math.sin(Date.now() / 100) * 0.3;
+                }
+
+                const targetRotation = Math.max(-0.5, Math.min(Math.PI / 4, this.velocity * 0.05));
+                this.rotation = this.rotation * 0.9 + targetRotation * 0.1;
+                ctx.rotate(this.rotation);
+
+                // Efeito do modo fantasma
+                if (this.isGhostEffectActive && currentSkin.id === 'demon') {
+                    ctx.globalAlpha = 0.6;
+                    // Efeito de rastro vermelho
+                    for(let i = 1; i <= 3; i++) {
+                        ctx.save();
+                        ctx.globalAlpha = 0.2 / i;
+                        ctx.translate(-5 * i, 0);
+                        drawDemonBird(ctx, 0, 0, this.radius);
+                        ctx.restore();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+
+                switch(currentSkin.id) {
+                    case 'default':
+                        drawDefaultBird(ctx, 0, 0, this.radius);
+                        break;
+                    case 'yellow':
+                        drawYellowBird(ctx, 0, 0, this.radius);
+                        break;
+                    case 'demon':
+                        drawDemonBird(ctx, 0, 0, this.radius);
+                        break;
+                    case 'angel':
+                        drawAngelBird(ctx, 0, 0, this.radius);
+                        break;
+                    case 'halloween':
+                        drawFloatingEye(ctx, 0, 0, this.radius);
+                        break;
+                }
+                
+                ctx.restore();
+            },
+
+            update() {
+                if (gameStarted) {
+                    // Aplicar gravidade com planagem
+                    let currentGravity = GRAVITY;
+                    
+                    if (this.velocity > 0) { // Quando está caindo
+                        // Aplicar planagem base para todos os pássaros
+                        currentGravity *= (1 - BASE_GLIDE_BONUS);
+                        
+                        if (currentSkin.id === 'default') {
+                            // Adicionar bônus extra para o pássaro verde (total: 40% + 15% = 55%)
+                            currentGravity *= (1 - GREEN_BIRD_GLIDE_BONUS);
+                        }
+                    }
+                    
+                    this.velocity += currentGravity;
+                    
+                    // Limitar a velocidade máxima de queda
+                    if (currentSkin.id === 'default' && this.velocity > 6) {
+                        this.velocity = 6; // Velocidade máxima de queda para o pássaro verde
+                    } else if (this.velocity > 8) {
+                        this.velocity = 8; // Velocidade máxima de queda para outros pássaros (era 10 antes)
+                    }
+                    
+                    this.y += this.velocity;
+                }
+            },
+
+            flap() {
+                this.velocity = FLAP_SPEED;
+                if (currentSkin.id === 'demon') {
+                    // Adicionar um pequeno impulso extra para o pássaro demônio
+                    this.velocity *= 1.1;
+                }
+            },
+
+            reset() {
+                this.y = canvas.height / 2;
+                this.velocity = 0;
+                this.rotation = 0;
+                this.isGhostEffectActive = false;
+                this.isInvulnerable = false;
+                this.dimensionalAuraActive = false;
+                passedPipesCount = 0;
+                if (this.invulnerabilityTimer) {
+                    clearTimeout(this.invulnerabilityTimer);
+                }
+                if (this.dimensionalAuraTimer) {
+                    clearTimeout(this.dimensionalAuraTimer);
+                }
+                this.resurrectionsLeft = currentSkin.id === 'angel' ? 5 : 0;
+            }
+        };
+
+        // Cano
+        class Pipe {
+            constructor() {
+                this.width = 50;
+                this.gap = PIPE_GAP;
+                this.x = canvas.width;
+                this.topHeight = Math.random() * (canvas.height - this.gap - 120) + 60;
+                this.bottomY = this.topHeight + this.gap;
+                this.passed = false;
+                this.isMoving = score > 0 && score % 20 === 0; // Cano móvel a cada 20 pontos
+                this.moveDirection = 1; // 1 para cima, -1 para baixo
+                this.originalTopHeight = this.topHeight;
+            }
+
+            draw() {
+                // Adicionar efeito visual para canos móveis
+                if (this.isMoving) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.3;
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(this.x - 2, 0, this.width + 4, canvas.height);
+                    ctx.restore();
+                }
+
+                // Cano superior
+                ctx.fillStyle = this.isMoving ? '#4CAF50' : '#2ECC71';
+                ctx.fillRect(this.x, 0, this.width, this.topHeight);
+                ctx.fillStyle = this.isMoving ? '#388E3C' : '#27AE60';
+                ctx.fillRect(this.x - 2, this.topHeight - 20, this.width + 4, 20);
+
+                // Cano inferior
+                ctx.fillStyle = this.isMoving ? '#4CAF50' : '#2ECC71';
+                ctx.fillRect(this.x, this.bottomY, this.width, canvas.height - this.bottomY);
+                ctx.fillStyle = this.isMoving ? '#388E3C' : '#27AE60';
+                ctx.fillRect(this.x - 2, this.bottomY, this.width + 4, 20);
+
+                // Adicionar indicador de movimento para canos móveis
+                if (this.isMoving) {
+                    ctx.fillStyle = '#FFD700';
+                    const arrowSize = 10;
+                    const arrowX = this.x + this.width / 2;
+                    
+                    // Seta indicando direção do movimento
+                    ctx.beginPath();
+                    if (this.moveDirection > 0) {
+                        // Seta para cima
+                        ctx.moveTo(arrowX - arrowSize, this.bottomY - 30);
+                        ctx.lineTo(arrowX + arrowSize, this.bottomY - 30);
+                        ctx.lineTo(arrowX, this.bottomY - 30 - arrowSize);
+                    } else {
+                        // Seta para baixo
+                        ctx.moveTo(arrowX - arrowSize, this.topHeight + 30);
+                        ctx.lineTo(arrowX + arrowSize, this.topHeight + 30);
+                        ctx.lineTo(arrowX, this.topHeight + 30 + arrowSize);
+                    }
+                    ctx.fill();
+                }
+            }
+
+            update() {
+                this.x -= PIPE_SPEED;
+                
+                if (this.isMoving) {
+                    const maxMovement = 100;
+                    const movement = this.moveDirection * MOVING_PIPE_SPEED;
+                    
+                    this.topHeight += movement;
+                    this.bottomY = this.topHeight + this.gap;
+
+                    if (Math.abs(this.topHeight - this.originalTopHeight) > maxMovement) {
+                        this.moveDirection *= -1;
+                    }
+
+                    if (this.topHeight < 60) {
+                        this.topHeight = 60;
+                        this.moveDirection = -1;
+                    } else if (this.bottomY > canvas.height - 60) {
+                        this.topHeight = canvas.height - this.gap - 60;
+                        this.moveDirection = 1;
+                    }
+                }
+                
+                if (!gameOver && gameStarted) {
+                    const birdRight = bird.x + bird.radius;
+                    const birdLeft = bird.x - bird.radius;
+                    const birdTop = bird.y - bird.radius;
+                    const birdBottom = bird.y + bird.radius;
+                    
+                    if (!bird.isInvulnerable &&
+                        birdRight > this.x && 
+                        birdLeft < this.x + this.width && 
+                        (birdTop < this.topHeight || birdBottom > this.bottomY)
+                    ) {
+                        if (currentSkin.id === 'demon') {
+                            const ghostChance = Math.random();
+                            if (ghostChance <= 0.3 || bird.isGhostEffectActive) {
+                                if (!bird.isGhostEffectActive) {
+                                    bird.activateGhostEffect();
+                                }
+                                return;
+                            }
+                        }
+                        
+                        if (!bird.isGhostEffectActive) {
+                            if ((currentSkin.id === 'angel' || currentSkin.id === 'halloween') && bird.resurrect()) {
+                                return;
+                            }
+                            gameOver = true;
+                            // Salvar pontuação ao morrer
+                            if (score > highScore) {
+                                highScore = score;
+                                saveGameData();
+                            }
+                        }
+                    }
+                    
+                    if (!this.passed && bird.x > this.x + this.width) {
+                        const pointsToAdd = currentSkin.id === 'yellow' ? 2 : 1;
+                        score += pointsToAdd;
+                        passedPipesCount++;
+                        this.passed = true;
+                        
+                        // Verificar e salvar recorde imediatamente após pontuar
+                        if (score > highScore) {
+                            highScore = score;
+                            saveGameData();
+                        }
+                        
+                        playSound(pointSound);
+                        
+                        if (currentSkin.id === 'yellow') {
+                            showDoublePointsEffect();
+                        }
+                        
+                        if (currentSkin.id === 'halloween') {
+                            bird.checkDimensionalAura();
+                        }
+
+                        if (this.isMoving) {
+                            showMovingPipeEffect();
+                        }
+                    }
+                }
+            }
+        }
+
+        function canSpawnPipe() {
+            if (pipes.length === 0) return true;
+            
+            const lastPipe = pipes[pipes.length - 1];
+            return canvas.width - lastPipe.x >= MIN_PIPE_DISTANCE;
+        }
+
+        function spawnPipe() {
+            if (gameStarted && !gameOver && canSpawnPipe()) {
+                pipes.push(new Pipe());
+            }
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Pontuação: ${score}`, 10, 30);
+            
+            // Atualizar o recorde em tempo real
+            if (score > highScore) {
+                highScore = score;
+                saveGameData();
+            }
+            ctx.fillText(`Recorde: ${highScore}`, 10, 60);
+
+            // Mostrar ressurreições restantes para o Pássaro Anjo e Olho Flutuante
+            if ((currentSkin.id === 'angel' || currentSkin.id === 'halloween') && gameStarted) {
+                ctx.fillStyle = currentSkin.id === 'angel' ? '#FFD700' : '#800080';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(`Ressurreições: ${bird.resurrectionsLeft}`, canvas.width - 10, 30);
+                
+                if (currentSkin.id === 'halloween') {
+                    ctx.fillText(`Canos: ${passedPipesCount % 10}/10`, canvas.width - 10, 55);
+                }
+            }
+
+            if (!gameStarted) {
+                ctx.font = 'bold 30px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Clique para começar', canvas.width/2, canvas.height/2);
+            }
+
+            if (gameOver) {
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#FF6B6B';
+                ctx.font = 'bold 40px Arial';
+                ctx.fillText('Game Over', canvas.width/2, canvas.height/2 - 40);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 20px Arial';
+                ctx.fillText('Clique para reiniciar', canvas.width/2, canvas.height/2 + 40);
+            }
+        }
+
+        // Eventos para mobile e desktop
+        function handleInteraction(e) {
+            e.preventDefault();
+            
+            if (gameOver) {
+                reset();
+                return;
+            }
+            
+            if (!gameStarted) {
+                gameStarted = true;
+                document.getElementById('gameContainer').classList.add('game-active');
+                if (window.spawnInterval) {
+                    clearInterval(window.spawnInterval);
+                }
+                window.spawnInterval = setInterval(spawnPipe, PIPE_SPAWN_INTERVAL);
+            }
+            
+            bird.flap();
+            playSound(flapSound);
+        }
+
+        // Eventos de mouse/touch
+        canvas.addEventListener('click', handleInteraction);
+        canvas.addEventListener('touchstart', handleInteraction);
+        jumpButton.addEventListener('touchstart', handleInteraction);
+        jumpButton.addEventListener('click', handleInteraction);
+
+        // Prevenir comportamentos padrão do navegador mobile
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', function() {
+            setTimeout(resizeCanvas, 100);
+        });
+
+        // Inicialização
+        resizeCanvas();
+        gameLoop();
+
+        // Carregar dados salvos ao iniciar
+        loadGameData();
+
+        // Adicionar efeito visual para pontuação dupla
+        function showDoublePointsEffect() {
+            const scoreText = document.createElement('div');
+            scoreText.textContent = '+2';
+            scoreText.style.cssText = `
+                position: absolute;
+                color: #FFD700;
+                font-size: 24px;
+                font-weight: bold;
+                text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                animation: floatUp 1s ease-out;
+                pointer-events: none;
+                left: ${bird.x + 30}px;
+                top: ${bird.y - 20}px;
+            `;
+            
+            document.getElementById('gameContainer').appendChild(scoreText);
+            
+            setTimeout(() => {
+                scoreText.remove();
+            }, 1000);
+        }
+
+        // Adicionar animação para o efeito de pontuação
+        const styleSheet = document.styleSheets[0];
+        styleSheet.insertRule(`
+            @keyframes floatUp {
+                0% {
+                    transform: translateY(0) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-50px) scale(1.5);
+                    opacity: 0;
+                }
+            }
+        `, styleSheet.cssRules.length);
+
+        // Adicionar função para desenhar o pássaro demônio
+        function drawDemonBird(ctx, x, y, radius, isPreview = false) {
+            // Aura demoníaca
+            if (!isPreview) {
+                const gradient = ctx.createRadialGradient(x, y, radius, x, y, radius * 2);
+                gradient.addColorStop(0, 'rgba(255, 0, 0, 0.2)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Corpo principal
+            const bodyGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            bodyGradient.addColorStop(0, '#FF0000');
+            bodyGradient.addColorStop(1, '#800000');
+            ctx.fillStyle = bodyGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Chifres maiores e mais elaborados com gradiente preto
+            const hornGradient = ctx.createLinearGradient(x, y - radius, x, y - radius * 2.5);
+            hornGradient.addColorStop(0, '#000000');  // Preto puro na base
+            hornGradient.addColorStop(0.5, '#1A1A1A'); // Preto médio
+            hornGradient.addColorStop(1, '#333333');   // Preto mais claro na ponta
+            ctx.fillStyle = hornGradient;
+
+            // Chifre esquerdo maior e mais curvo
+            ctx.beginPath();
+            ctx.moveTo(x - radius/2, y - radius);
+            ctx.quadraticCurveTo(
+                x - radius, y - radius * 2,
+                x - radius/2 - radius/3, y - radius * 2.5
+            );
+            ctx.lineTo(x - radius/2 + radius/6, y - radius * 2.3);
+            ctx.quadraticCurveTo(
+                x - radius/2, y - radius * 1.8,
+                x - radius/3, y - radius
+            );
+            ctx.fill();
+
+            // Chifre direito maior e mais curvo
+            ctx.beginPath();
+            ctx.moveTo(x + radius/2, y - radius);
+            ctx.quadraticCurveTo(
+                x + radius, y - radius * 2,
+                x + radius/2 + radius/3, y - radius * 2.5
+            );
+            ctx.lineTo(x + radius/2 - radius/6, y - radius * 2.3);
+            ctx.quadraticCurveTo(
+                x + radius/2, y - radius * 1.8,
+                x + radius/3, y - radius
+            );
+            ctx.fill();
+
+            // Adicionar brilho nos chifres
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            // Brilho no chifre esquerdo
+            ctx.beginPath();
+            ctx.moveTo(x - radius/2 - radius/4, y - radius * 2);
+            ctx.lineTo(x - radius/2 - radius/6, y - radius * 1.7);
+            ctx.stroke();
+            // Brilho no chifre direito
+            ctx.beginPath();
+            ctx.moveTo(x + radius/2 + radius/4, y - radius * 2);
+            ctx.lineTo(x + radius/2 + radius/6, y - radius * 1.7);
+            ctx.stroke();
+
+            // Olhos demoníacos
+            // Fundo do olho (vermelho brilhante)
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/3, 0, Math.PI * 2);
+            ctx.fill();
+            // Pupila (preta com fenda)
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(x + radius/2, y - radius/4, radius/6, 0, Math.PI * 2);
+            ctx.fill();
+            // Fenda da pupila
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x + radius/2 - radius/6, y - radius/4);
+            ctx.lineTo(x + radius/2 + radius/6, y - radius/4);
+            ctx.stroke();
+
+            // Bico pontiagudo
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + radius * 1.5, y - radius/4);
+            ctx.lineTo(x + radius * 1.5, y + radius/4);
+            ctx.closePath();
+            ctx.fill();
+
+            // Adicionar pequenas escamas/marcas
+            ctx.strokeStyle = '#FF4444';
+            ctx.lineWidth = 1;
+            for(let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(x + (Math.random() - 0.5) * radius, 
+                       y + (Math.random() - 0.5) * radius,
+                       2, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        // Adicionar função para mostrar mensagem do modo fantasma
+        function showGhostModeMessage() {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = 'MODO FANTASMA ATIVADO!';
+            messageDiv.style.cssText = `
+                position: absolute;
+                color: #FF0000;
+                font-size: 28px;
+                font-weight: bold;
+                text-shadow: 0 0 10px rgba(255, 0, 0, 0.8),
+                             0 0 20px rgba(255, 0, 0, 0.5);
+                animation: fadeOut 1s ease-out;
+                pointer-events: none;
+                left: 50%;
+                top: 40%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                font-family: 'Arial Black', sans-serif;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            `;
+            
+            document.getElementById('gameContainer').appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 1000);
+        }
+
+        // Adicionar animação para a mensagem do modo fantasma
+        styleSheet.insertRule(`
+            @keyframes fadeOut {
+                0% { 
+                    transform: translate(-50%, -50%) scale(1.5);
+                    opacity: 1;
+                }
+                100% { 
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 0;
+                }
+            }
+        `, styleSheet.cssRules.length);
+
+        // Adicionar funcionalidade do botão de menu
+        menuButton.addEventListener('click', showMenu);
+
+        // Função para mostrar efeito de ressurreição
+        function showResurrectionEffect() {
+            const effectDiv = document.createElement('div');
+            effectDiv.style.cssText = `
+                position: absolute;
+                left: ${bird.x}px;
+                top: ${bird.y}px;
+                width: 100px;
+                height: 100px;
+                background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 70%);
+                transform: translate(-50%, -50%);
+                animation: resurrectionGlow 1s ease-out;
+                pointer-events: none;
+                z-index: 1000;
+            `;
+            
+            document.getElementById('gameContainer').appendChild(effectDiv);
+            
+            setTimeout(() => effectDiv.remove(), 1000);
+        }
+
+        // Adicionar animação do efeito de ressurreição
+        styleSheet.insertRule(`
+            @keyframes resurrectionGlow {
+                0% { 
+                    transform: translate(-50%, -50%) scale(0);
+                    opacity: 1;
+                }
+                100% { 
+                    transform: translate(-50%, -50%) scale(2);
+                    opacity: 0;
+                }
+            }
+        `, styleSheet.cssRules.length);
+
+        // Adicionar função para mostrar efeito da Aura Dimensional
+        function showDimensionalAuraEffect() {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = 'AURA DIMENSIONAL +1';
+            messageDiv.style.cssText = `
+                position: absolute;
+                color: #800080;
+                font-size: 28px;
+                font-weight: bold;
+                text-shadow: 0 0 10px rgba(128, 0, 128, 0.8),
+                             0 0 20px rgba(128, 0, 128, 0.5);
+                animation: fadeOut 1s ease-out;
+                pointer-events: none;
+                left: 50%;
+                top: 40%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                font-family: 'Arial Black', sans-serif;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            `;
+            
+            document.getElementById('gameContainer').appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 1000);
+        }
+
+        // Adicionar função para mostrar efeito de ressurreição dimensional
+        function showDimensionalResurrectionEffect() {
+            const effectDiv = document.createElement('div');
+            effectDiv.style.cssText = `
+                position: absolute;
+                left: ${bird.x}px;
+                top: ${bird.y}px;
+                width: 100px;
+                height: 100px;
+                background: radial-gradient(circle, rgba(128,0,128,1) 0%, rgba(128,0,128,0) 70%);
+                transform: translate(-50%, -50%);
+                animation: dimensionalResurrectionGlow 1s ease-out;
+                pointer-events: none;
+                z-index: 1000;
+            `;
+            
+            document.getElementById('gameContainer').appendChild(effectDiv);
+            
+            setTimeout(() => effectDiv.remove(), 1000);
+        }
+
+        // Adicionar animação para o efeito de ressurreição dimensional
+        styleSheet.insertRule(`
+            @keyframes dimensionalResurrectionGlow {
+                0% {
+                    transform: translate(-50%, -50%) scale(0);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(-50%, -50%) scale(2);
+                    opacity: 0;
+                }
+            }
+        `, styleSheet.cssRules.length);
+
+        // Adicionar função para mostrar efeito ao passar por cano móvel
+        function showMovingPipeEffect() {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = 'CANO DIMENSIONAL!';
+            messageDiv.style.cssText = `
+                position: absolute;
+                color: #4CAF50;
+                font-size: 24px;
+                font-weight: bold;
+                text-shadow: 0 0 10px rgba(76, 175, 80, 0.8),
+                             0 0 20px rgba(76, 175, 80, 0.5);
+                animation: fadeOut 1s ease-out;
+                pointer-events: none;
+                left: 50%;
+                top: 30%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+                font-family: 'Arial Black', sans-serif;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            `;
+            
+            document.getElementById('gameContainer').appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 1000);
+        }
+
+        // Classe para as nuvens
+        class Cloud {
+            constructor() {
+                this.x = canvas.width + Math.random() * 100;
+                this.y = Math.random() * (canvas.height - 100);
+                this.width = Math.random() * 100 + 50;
+                this.height = this.width * 0.6;
+                this.speed = Math.random() * 0.5 + 0.2;
+                this.opacity = Math.random() * 0.3 + 0.1;
+            }
+
+            update() {
+                this.x -= this.speed;
+                if (this.x + this.width < 0) {
+                    this.x = canvas.width + Math.random() * 100;
+                    this.y = Math.random() * (canvas.height - 100);
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = '#FFFFFF';
+                
+                // Desenhar uma nuvem mais elaborada
+                ctx.beginPath();
+                ctx.arc(this.x + this.width * 0.3, this.y + this.height * 0.5, this.height * 0.5, 0, Math.PI * 2);
+                ctx.arc(this.x + this.width * 0.7, this.y + this.height * 0.5, this.height * 0.6, 0, Math.PI * 2);
+                ctx.arc(this.x + this.width * 0.5, this.y + this.height * 0.4, this.height * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        // Função para inicializar as nuvens
+        function initClouds() {
+            clouds = [];
+            const numClouds = 6;
+            for (let i = 0; i < numClouds; i++) {
+                const cloud = new Cloud();
+                cloud.x = Math.random() * canvas.width; // Distribuir as nuvens iniciais pela tela
+                clouds.push(cloud);
+            }
+        }
+
+        // Atualizar a função gameLoop para incluir as nuvens
+        function gameLoop() {
+            // Limpar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar fundo
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Atualizar e desenhar nuvens
+            clouds.forEach(cloud => {
+                cloud.update();
+                cloud.draw();
+            });
+
+            // Atualizar e desenhar canos
+            pipes = pipes.filter(pipe => pipe.x + pipe.width > 0);
+            pipes.forEach(pipe => {
+                pipe.update();
+                pipe.draw();
+            });
+
+            // Atualizar e desenhar pássaro
+            bird.update();
+            bird.draw();
+
+            // Verificar colisão com as bordas
+            checkCollision();
+
+            drawScore();
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        // Modificar a função toggleSound para melhor gerenciamento do áudio
+        function toggleSound() {
+            isMuted = !isMuted;
+            localStorage.setItem('isMuted', isMuted);
+            
+            const soundIcon = document.getElementById('soundIcon');
+            soundIcon.src = isMuted ? 'assets/mute.png' : 'assets/sound.png';
+            
+            if (isMuted) {
+                bgMusic.pause();
+            } else if (gameStarted) {
+                manageBgMusic();
+            }
+        }
+
+        // Carregar preferência de som do usuário
+        function loadSoundPreference() {
+            const savedMuted = localStorage.getItem('flappyBirdSoundMuted');
+            if (savedMuted !== null) {
+                isMuted = savedMuted === 'true';
+                soundButton.textContent = isMuted ? '🔇' : '🔊';
+                soundButton.classList.toggle('muted', isMuted);
+                [bgMusic, flapSound, pointSound, hitSound].forEach(sound => {
+                    sound.muted = isMuted;
+                });
+            }
+        }
+
+        // Adicionar evento de clique ao botão de som
+        soundButton.addEventListener('click', toggleSound);
+
+        // Modificar a detecção de colisão para incluir som
+        function checkCollision() {
+            if (bird.y + bird.radius > canvas.height || bird.y - bird.radius < 0) {
+                if ((currentSkin.id === 'angel' || currentSkin.id === 'halloween') && bird.resurrect()) {
+                    bird.y = Math.max(bird.radius, Math.min(canvas.height - bird.radius, bird.y));
+                } else {
+                    playSound(hitSound);
+                    gameOver = true;
+                }
+            }
+        }
+
+        // Carregar preferências de som ao iniciar
+        loadSoundPreference();
+
+        // Adicionar função para pré-carregar áudio
+        function preloadAudio() {
+            const audioElements = [bgMusic, flapSound, pointSound, hitSound];
+            
+            audioElements.forEach(audio => {
+                audio.load();
+                
+                // Adicionar eventos de erro para debug
+                audio.onerror = function() {
+                    console.error('Erro ao carregar áudio:', audio.src);
+                };
+            });
+            
+            // Tentar carregar a música de fundo especificamente
+            bgMusic.addEventListener('canplaythrough', () => {
+                console.log('Música carregada e pronta para tocar');
+            });
+        }
+
+        // Chamar preloadAudio ao carregar a página
+        window.addEventListener('load', preloadAudio);
+
+        // Adicionar evento de interação inicial para habilitar áudio
+        document.addEventListener('click', function enableAudio() {
+            if (!isMuted) {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                document.removeEventListener('click', enableAudio);
+            }
+        });
+
+        // Adicionar evento para salvar antes de fechar a página
+        window.addEventListener('beforeunload', function() {
+            if (score > highScore) {
+                saveGameData();
+            }
+        });
+
+        // Adicionar salvamento periódico durante o jogo
+        setInterval(function() {
+            if (gameStarted && !gameOver && score > highScore) {
+                saveGameData();
+            }
+        }, 5000); // Salvar a cada 5 segundos se necessário
+    </script>
+</body>
+</html> 

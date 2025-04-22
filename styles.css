@@ -1,0 +1,21 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background: linear-gradient(to bottom, #1a1a1a, #333);
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+}
+
+canvas {
+    border: 3px solid #000;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    display: block;
+    background-color: transparent;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+} 
